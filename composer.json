@@ -1,0 +1,7 @@
+{
+    "name": "kostas/binance",
+    "require": {
+        "jaggedsoft/php-binance-api": "^0.5.28",
+        "delight-im/db": "^1.3"
+    }
+}
