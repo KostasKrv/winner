@@ -1,2 +1,4 @@
 /lock_file.lock
 /vendor
+lib/config.php
+actions/ca.pem

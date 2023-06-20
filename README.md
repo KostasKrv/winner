@@ -2,7 +2,7 @@
 - Updates prices with a cronjob
 
 ### Setup
-####Virtual hosts conf file　
+#### Virtual hosts conf file　
 
 ```javascript
 <VirtualHost *:80>
@@ -24,7 +24,7 @@
 
 ```
 
-####Run composer
+#### Run composer
 ```bash
 composer update
 ```
