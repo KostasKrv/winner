@@ -172,19 +172,37 @@ class Utils
 
     public static function htmlHeader($title = '', $includeBootstrap = true)
     { ?>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Le winner<?php if (!empty($title = $specs['title'])) : ?> | <?php echo $title ?><?php endif ?></title>
+        <!doctype html>
+        <html lang="en">
 
-        <?php if ($includeBootstrap === true) : ?>
-            <!-- Bootstrap -->
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
-        <?php endif; ?>
-<?php
-    }
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Le winner<?php if (!empty($title)) : ?> | <?php echo $title ?><?php endif ?></title>
 
-    static function htmlFooter()
-    {
-    }
+            <?php if ($includeBootstrap === true) : ?>
+                <!-- Bootstrap -->
+                <link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+                <?php /* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"> */ ?>
+            <?php endif; ?>
+        </head>
+
+        <body class="bg-body-tertiary">
+        <?php
+    } /// Function htmlHeader
+
+    static function htmlFooter($includeBootstrap = true)
+    { ?>
+            <!-- From htmlFooterUtil -->
+            <diV id="htmlFooterFromFunction">
+                <?php if ($includeBootstrap === true) : ?>
+                    <script type="text/javascript" src="/public/bootstrap/js/bootstrap.min.js"></script>
+                <?php endif; ?>
+            </diV>
+
+        </body>
+
+        </html>
+        <?php
+    } /// Function htmlFooter
 }
