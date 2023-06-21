@@ -2,6 +2,13 @@
     "name": "kostas/binance",
     "require": {
         "jaggedsoft/php-binance-api": "^0.5.28",
-        "delight-im/db": "^1.3"
+        "delight-im/db": "^1.3",
+        "twbs/bootstrap": "^5.3"
+    },
+    "scripts": {
+        "post-update-cmd": [
+            "rm -rf public/bootstrap",
+            "cp -R vendor/twbs/bootstrap/dist public/bootstrap"
+        ]
     }
 }

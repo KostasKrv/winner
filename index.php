@@ -1,7 +1,7 @@
 <br />
-<a href="/actions/order-fetcher" target="_blank">Fetch orders</a>
+<a href="actions/order-fetcher" target="_blank">Fetch orders</a>
 <br />
-<a href="/actions/price-fetcher" target="_blank">Fetch prices</a>
+<a href="actions/price-fetcher" target="_blank">Fetch prices</a>
 <br />
 <a href="candlesticks" target="_blank">Candlesticks</a>
 <br />

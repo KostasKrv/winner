@@ -35,8 +35,13 @@ class Utils
         }
     }
 
-    static function shouldProcessSymbol($symbol)
+    static function shouldProcessSymbol($symbol, $bidPrice, $askPrice)
     {
+        /// Zero prices check
+        if (empty($bidPrice) || empty($askPrice)) {
+            return false;
+        }
+
         if (!Utils::endsWith($symbol, 'USDT')) {
             return false;
         }
@@ -71,6 +76,16 @@ class Utils
         return $prices;
     }
 
+    /**
+     * Insert a coin price into the db
+     *
+     * @param string $symbol The symbol of the coin
+     * @param float $bidPriceFloatVal The highest price a buyer is willing to pay
+     * @param float $askPriceFloatVal The minimum price a seller is willing to accept
+     * @param DateTime $date The date of the price
+     *      
+     * @return string | boolean
+     */
     static function insertCoinPriceIntoDb($symbol, $bidPriceFloatVal, $askPriceFloatVal, $date)
     {
         global $GLOBAL_CONFIG;
@@ -79,9 +94,6 @@ class Utils
 
             $_dateToFormat = 'Y-m-d H:i:s.v';
             $_now = $date;
-            /*$_now = new DateTime();
-        $_timezone = new DateTimeZone('Europe/Athens');
-        $_now->setTimezone($_timezone);*/
 
             $_set = [
                 'coin_symbol' => $symbol,
@@ -93,19 +105,86 @@ class Utils
 
             $_DB->insert('coin_prices', $_set);
         } catch (\Delight\Db\Throwable\IntegrityConstraintViolationException $e) {
-            /// Skipped because same price inside minute                
-            return false;
+            return $e->getMessage();
         } catch (\Exception $e) {
-            return false;
+            return $e->getMessage();
         }
 
         return true;
     }
 
-    static function deleteDump(){
+    static function fetchAndInsertPricesIntoDb()
+    {
+        Utils::ensureOneProccess();
+        $mainException = null;
+
+        try {
+            $startOfApi = new \DateTime();
+
+            $insertSets = $skippedArray = $errorSets = array();
+            $bookPrices = Config::getInstance()->binanceApi()->bookPrices();
+
+            $_now = $endOfApi = new \DateTime();
+
+            foreach ($bookPrices as $symbol => $symbolData) {
+
+                $bidPriceFloat = floatval($symbolData['bid']);
+                $askPriceFloat = floatval($symbolData['ask']);
+                $symbol = strtoupper($symbol);
+
+                if (!Utils::shouldProcessSymbol($symbol, $bidPriceFloat, $askPriceFloat)) {
+                    $skippedArray[$symbol] = $symbolData;
+                    continue;
+                }
+
+                /// Inserted is an error or a boolean
+                $inserted = Utils::insertCoinPriceIntoDb($symbol, $bidPriceFloat, $askPriceFloat, $_now);
+
+                if ($inserted === true) {
+                    $insertSets[$symbol] = $symbolData;
+                } else {
+                    $errorSets[$symbol] = $inserted;
+                }
+            }
+        } catch (\Exception $e) {
+            $mainException = $e->getMessage();
+        }
+        Utils::deleteLockFile();
+
+        return array(
+            'insertedArray' => $insertSets,
+            'errorArray' => $errorSets,
+            'skippedArray' => $skippedArray,
+            'apiPricesArray' => $bookPrices,
+            'mainExceptionString' => $mainException,
+            'startOfApiDateTime' => $startOfApi,
+            'endOfApiDateTime' => $endOfApi,
+        );
+    }
+
+    static function deleteDump()
+    {
         /*$_DB->exec(
             "DELETE FROM coin_prices WHERE price_date < ?",
             array($before->format($_dateToFormat))
         );*/
+    }
+
+    public static function htmlHeader($title = '', $includeBootstrap = true)
+    { ?>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Le winner<?php if (!empty($title = $specs['title'])) : ?> | <?php echo $title ?><?php endif ?></title>
+
+        <?php if ($includeBootstrap === true) : ?>
+            <!-- Bootstrap -->
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
+        <?php endif; ?>
+<?php
+    }
+
+    static function htmlFooter()
+    {
     }
 }
