@@ -197,15 +197,15 @@ class Utils
     { ?>
             <!-- From htmlFooterUtil -->
             <diV id="htmlFooterFromFunction">
-                <script type="text/javascript" src="/public/jquery/jquery.min.js"></script>    
-                <?php if ($includeBootstrap === true) : ?>
-                <script type="text/javascript" src="/public/bootstrap/js/bootstrap.min.js"></script>
-                <?php endif; ?>                
-            </diV>
+                <script type="text/javascript" src="/public/jquery/jquery.min.js"></script>
 
+                <?php if ($includeBootstrap === true) : ?>
+                    <script type="text/javascript" src="/public/bootstrap/js/bootstrap.min.js"></script>
+                <?php endif; ?>
+            </diV>
         </body>
 
         </html>
-        <?php
+<?php
     } /// Function htmlFooter
 }
