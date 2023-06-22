@@ -2,6 +2,8 @@
 
 namespace WinnerApp;
 
+use Exception;
+
 class Utils
 {
     static function startsWith($haystack, $needle)

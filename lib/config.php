@@ -11,25 +11,74 @@ require_once(__DIR__ . '/utils.php');
 global $GLOBAL_CONFIG;
 class Config
 {
-    private $DB;
-    public function db(){
-        return $this->DB;
-    }
-
-    private $BINANCE_API;
-    public function binanceApi(){
-        return $this->BINANCE_API;
-    }
-
-    private $LOCKFILE = __DIR__ . '/lock_file.lock';
-    public function lockFile(){
-        return $this->LOCKFILE;
-    }
-
     function __construct()
     {
         $this->initDB();
         $this->initBinanceApi();
+        $this->enableCatchFatalErrorsHandler();
+    }
+
+    /// As seen in https://spencermortensen.com/articles/php-error-handling/
+    private function enableCatchFatalErrorsHandler()
+    {
+        /// Step 1
+        $onError = function ($level, $message, $file, $line) {
+            throw new \ErrorException($message, 0, $level, $file, $line);
+        };
+
+        try {
+            set_error_handler($onError);
+        } catch (\Throwable $throwable) {
+            Config::logError('Throwable: ' . $throwable->getMessage() . "\n");
+        } finally {
+            restore_error_handler();
+        }
+
+        /// Step 2
+        $onShutdown = function () {
+            $error = error_get_last();
+
+            if ($error === null) {
+                return;
+            }
+
+            $exception = new \ErrorException($error['message'], 0, $error['type'], $error['file'], $error['line']);
+
+            Config::logError('Error: ' . $exception->getMessage() . "\n");
+        };
+
+        register_shutdown_function($onShutdown);
+        error_reporting(1);
+
+        /// Step 3
+        $onException = function ($exception) {
+            Config::logError("Exception: " . $exception->getMessage() . "\n");
+        };
+
+        set_exception_handler($onException);
+    }
+
+    public static function logError($exceptionString)
+    {
+        echo $exceptionString;
+    }
+
+    private $DB;
+    public function db()
+    {
+        return $this->DB;
+    }
+
+    private $BINANCE_API;
+    public function binanceApi()
+    {
+        return $this->BINANCE_API;
+    }
+
+    private $LOCKFILE = __DIR__ . '/lock_file.lock';
+    public function lockFile()
+    {
+        return $this->LOCKFILE;
     }
 
     ///https://github.com/binance-exchange/php-binance-api
@@ -37,7 +86,7 @@ class Config
     {
         $binancePK = getenv('BINANCE_PUBLIC_KEY');
         $binanceSK = getenv('BINANCE_SECRET_KEY');
-        
+
         $this->BINANCE_API = new \Binance\API($binancePK, $binanceSK);
     }
 
@@ -62,7 +111,8 @@ class Config
         $this->DB = \Delight\Db\PdoDatabase::fromDataSource($dataSource);
     }
 
-    public static function getInstance(){
+    public static function getInstance()
+    {
         global $GLOBAL_CONFIG;
         return $GLOBAL_CONFIG;
     }
