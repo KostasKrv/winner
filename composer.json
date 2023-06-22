@@ -3,12 +3,15 @@
     "require": {
         "jaggedsoft/php-binance-api": "^0.5.28",
         "delight-im/db": "^1.3",
-        "twbs/bootstrap": "^5.3"
+        "twbs/bootstrap": "^5.3",
+        "components/jquery": "^3.6"
     },
     "scripts": {
         "post-update-cmd": [
             "rm -rf public/bootstrap",
-            "cp -R vendor/twbs/bootstrap/dist public/bootstrap"
+            "cp -R vendor/twbs/bootstrap/dist public/bootstrap",
+            "rm -rf public/jquery",
+            "cp -R vendor/components/jquery public/jquery"
         ]
     }
 }
