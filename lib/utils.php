@@ -175,9 +175,12 @@ class Utils
         );
 
         $wantedIntervals = array(
-            0 => '1 SECOND',
-            '1 minute' => '1 MINUTE',
+            0 => '1 MINUTE',
+            //'1 minute' => '1 MINUTE',
+            '2 minutes' => '2 MINUTES',
+            '4 minutes' => '4 MINUTES',
             '5 minutes' => '5 MINUTES',
+            '10 minutes' => '10 MINUTES',
             '15 minutes' => '15 MINUTES',
             '30 minutes' => '20 MINUTES',
             '1 hour' => '1 HOUR',
@@ -210,7 +213,7 @@ class Utils
         return $results;
     }
 
-    static function findCoinPriceAtGivenTime($coinSymbolString, $wantedDateTime, $thresholdInMinutesInt = 3)
+    static function findCoinPriceAtGivenTime($coinSymbolString, $wantedDateTime, $thresholdInMinutesInt = 1)
     {
         global $GLOBAL_CONFIG;
         $_DB = $GLOBAL_CONFIG->db();
