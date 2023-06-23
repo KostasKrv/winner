@@ -3,6 +3,7 @@
 namespace WinnerApp;
 
 require_once(__DIR__ . '/lib/config.php');
+
 ?>
 
 <?php Utils::htmlHeader($title = "Home"); ?>
@@ -17,6 +18,11 @@ require_once(__DIR__ . '/lib/config.php');
         'title' => 'Fetch prices',
         'desciption' => 'Populate the current coin prices into the db.',
         'link' => 'actions/price-fetcher',
+    ),
+    array(
+        'title' => 'Show prices with statuses',
+        'desciption' => 'Populate the current coin prices into the db.',
+        'link' => 'actions/prices-from-db',
     ),
 );
 ?>

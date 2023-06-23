@@ -2,17 +2,19 @@
 
 namespace WinnerApp;
 
-set_time_limit(60 * 50);
-date_default_timezone_set('Europe/Athens');
-
 require_once(__DIR__ . '/../vendor/autoload.php');
+
 require_once(__DIR__ . '/utils.php');
+require_once(__DIR__ . '/JsonResponse.php');
 
 global $GLOBAL_CONFIG;
 class Config
 {
     function __construct()
-    {
+    {   
+        set_time_limit(60 * 50);
+        date_default_timezone_set('Europe/Athens');
+
         $this->initDB();
         $this->initBinanceApi();
         $this->enableCatchFatalErrorsHandler();
