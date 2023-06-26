@@ -4,3 +4,4 @@ lib/config.php
 actions/ca.pem
 /public/bootstrap/css
 /public/bootstrap/js
+/composer.lock
