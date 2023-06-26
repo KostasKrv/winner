@@ -274,8 +274,7 @@ class Utils
     public static function htmlHeader($title = '', $INCLUDETHESE = array())
     {
         $INCLUDETHESE = array_merge(Utils::PKG_DEFAULTS, $INCLUDETHESE);
-?>
-        <!doctype html>
+?><!doctype html>
         <html lang="en">
 
         <head>

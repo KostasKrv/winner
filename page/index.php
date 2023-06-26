@@ -4,11 +4,9 @@ namespace WinnerApp;
 
 require_once(__DIR__ . '/../lib/config.php');
 
-?>
+Utils::htmlHeader($title = "Home");
 
-<?php Utils::htmlHeader($title = "Home"); ?>
-
-<?php $links = array(
+$links = array(
     /*array(
         'title' => 'Fetch orders',
         'desciption' => 'Some placeholder content in a paragraph.',
@@ -30,7 +28,6 @@ require_once(__DIR__ . '/../lib/config.php');
     ),
 );
 ?>
-
 <div class="page-price-fetcher">
 
     <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
