@@ -18,10 +18,26 @@ class Utils
         return substr_compare($haystack, $needle, -strlen($needle)) === 0;
     }
 
+    static function deleteLockFileIfOldEnough()
+    {
+        $CONFIG = Config::getInstance();
+
+        $filePath = $CONFIG->lockFile();
+        $creationTime = filectime($filePath);
+        $currentTime = time();
+
+        if ($currentTime - $creationTime > 120) { // 120 seconds = 2 minutes
+            Utils::deleteLockFile();
+        }
+    }
+
     static function ensureOneProccess()
     {
-        global $GLOBAL_CONFIG;
-        $fileName = $GLOBAL_CONFIG->lockFile();
+        Utils::deleteLockFileIfOldEnough();
+
+        $CONFIG = Config::getInstance();
+        $fileName = $CONFIG->lockFile();
+
         if (file_exists($fileName)) {
             echo 'Halted. Another process is running!<br />';
             exit;
@@ -32,8 +48,9 @@ class Utils
 
     static function deleteLockFile()
     {
-        global $GLOBAL_CONFIG;
-        $fileName = $GLOBAL_CONFIG->lockFile();
+        $CONFIG = Config::getInstance();
+        $fileName = $CONFIG->lockFile();
+
         if (file_exists($fileName)) {
             unlink($fileName);
         }
@@ -64,8 +81,9 @@ class Utils
     const DB_PRICE_TABLE = 'coin_prices';
     static function fetchLastInsertedPrices()
     {
-        global $GLOBAL_CONFIG;
-        $_DB = $GLOBAL_CONFIG->db();
+        $CONFIG = Config::getInstance();
+        $_DB = $CONFIG->db();
+
         $selectQuery = "SELECT DISTINCT(coin_symbol),bid_price,ask_price,price_date FROM `" . Utils::DB_PRICE_TABLE . "` ORDER BY price_date DESC";
 
         $results = $_DB->select($selectQuery);
@@ -73,6 +91,7 @@ class Utils
         if (empty($results)) {
             return array();
         }
+
         $prices = array();
         foreach ($results as $resIndex => $result) {
             $prices[$result["coin_symbol"]] = $result;
@@ -96,7 +115,6 @@ class Utils
         $_DB = Config::getInstance()->db();
 
         try {
-
             $_dateToFormat = 'Y-m-d H:i:s.v';
             $_now = $date;
 
@@ -175,8 +193,7 @@ class Utils
         );
 
         $wantedIntervals = array(
-            0 => '1 MINUTE',
-            //'1 minute' => '1 MINUTE',
+            '1 minute' => '1 MINUTE',
             '2 minutes' => '2 MINUTES',
             '4 minutes' => '4 MINUTES',
             '5 minutes' => '5 MINUTES',
@@ -196,21 +213,77 @@ class Utils
         );
 
         /// Fill intervals
+        $_dateToFormat = 'YmdHi';
         foreach ($wantedIntervals as $i => $k) {
             $time = new DateTime();
             $time->sub(DateInterval::createFromDateString($k));
-            $wantedIntervals[$i] = array($k, $time);
+            $timeInt = intval($time->format($_dateToFormat)); /// Do in int to avoid many conversions later
+            $wantedIntervals[$i] = array(
+                'key' => $k,
+                'timestampMinuteInt' => $timeInt
+            );
         }
 
         $results = array();
-        foreach ($coins as $coinSymbol) {
-            foreach ($wantedIntervals as $intvlKey => $intvlArray) {
-                $result = Utils::findCoinPriceAtGivenTime($coinSymbol, $intvlArray[1]);
-                $results[$coinSymbol][$intvlKey] = $result;
+        
+        /// Fetch the prices from the db. There may be empty for some coins
+        foreach ($wantedIntervals as $intvlKey => $intvlArray) {
+            $resultsRowArray = Utils::findCoinPricesAtOnce($intvlArray['timestampMinuteInt']);
+            foreach ($resultsRowArray as $coinRow) {
+                $results[$coinRow['coin_symbol']][$intvlKey] = $coinRow;
+            }
+        }
+
+        /// Fill in empty values
+        foreach($wantedIntervals as $intvlKey => $intvlArray) {
+            foreach ($results as $coinSymbol => $pricesArray){
+                if (!array_key_exists($intvlKey, $pricesArray)) {
+                    $results[$coinSymbol][$intvlKey] = null;
+                }
             }
         }
 
         return $results;
+    }
+
+    static function findCoinPricesAtOnce($wantedDateTime, $thresholdInMinutesInt = 1)
+    {
+        global $GLOBAL_CONFIG;
+        $_DB = $GLOBAL_CONFIG->db();
+
+        if ($wantedDateTime instanceof DateTime) {
+            $_wantedDateTimeMinuteInt = intval($wantedDateTime->format('YmdHi'));
+        } else {
+            $_wantedDateTimeMinuteInt = $wantedDateTime;
+        }
+
+        $_oldestPriceMinuteInt = $_wantedDateTimeMinuteInt - $thresholdInMinutesInt;
+        $_newestPriceMinuteInt = $_wantedDateTimeMinuteInt + $thresholdInMinutesInt;
+
+        /// eg select * from coin_prices cp where cp.coin_symbol = '1INCHUSDT' AND cp.price_date_minute > 202306221536 AND cp.price_date_minute < 202306221556 ORDER BY ABS(202306221540 - cp.price_date_minute) LIMIT 1
+        $selectQuery = ""
+            . " SELECT DISTINCT(coin_symbol), bid_price, ask_price, price_date, price_date_minute"
+            . " FROM " . Utils::DB_PRICE_TABLE . " cp"
+            . " WHERE"
+            . " cp.price_date_minute > ?"
+            . " AND"
+            . " cp.price_date_minute < ?"
+            . " ORDER BY ABS(? - cp.price_date_minute), coin_symbol, cp.price_date ASC";
+            
+        $result = $_DB->select(
+            $selectQuery,
+            array(
+                $_oldestPriceMinuteInt,
+                $_newestPriceMinuteInt,
+                $_wantedDateTimeMinuteInt,
+            )
+        );
+
+        if (empty($result)) {
+            return null;
+        }
+
+        return $result;
     }
 
     static function findCoinPriceAtGivenTime($coinSymbolString, $wantedDateTime, $thresholdInMinutesInt = 1)
@@ -274,7 +347,8 @@ class Utils
     public static function htmlHeader($title = '', $INCLUDETHESE = array())
     {
         $INCLUDETHESE = array_merge(Utils::PKG_DEFAULTS, $INCLUDETHESE);
-?><!doctype html>
+?>
+        <!doctype html>
         <html lang="en">
 
         <head>
