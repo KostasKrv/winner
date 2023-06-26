@@ -264,9 +264,17 @@ class Utils
 
     const PKG_BOOTSTRAP = 'bootstrap';
     const PKG_CHARTS = 'charts';
+    const PKG_FONTAWESOME = 'font-awesome';
 
-    public static function htmlHeader($title = '', $INCLUDETHESE = array(Utils::PKG_BOOTSTRAP))
-    { ?>
+    const PKG_DEFAULTS = array(
+        Utils::PKG_BOOTSTRAP,
+        Utils::PKG_FONTAWESOME,
+    );
+
+    public static function htmlHeader($title = '', $INCLUDETHESE = array())
+    {
+        $INCLUDETHESE = array_merge(Utils::PKG_DEFAULTS, $INCLUDETHESE);
+?>
         <!doctype html>
         <html lang="en">
 
@@ -280,6 +288,12 @@ class Utils
                 <link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet">
                 <?php /* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"> */ ?>
             <?php endif; ?>
+
+            <?php if (in_array(Utils::PKG_FONTAWESOME, $INCLUDETHESE)) : ?>
+                <!-- Bootstrap -->
+                <link href="/public/font-awesome/css/bootstrap.min.css" rel="stylesheet">
+                <?php /* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"> */ ?>
+            <?php endif; ?>
         </head>
 
         <body class="bg-body-tertiary">
@@ -287,8 +301,10 @@ class Utils
     } /// Function htmlHeader
 
 
-    static function htmlFooter($INCLUDETHESE = array(Utils::PKG_BOOTSTRAP))
-    { ?>
+    static function htmlFooter($INCLUDETHESE = array())
+    {
+        $INCLUDETHESE = array_merge(Utils::PKG_DEFAULTS, $INCLUDETHESE);
+        ?>
             <!-- From htmlFooterUtil -->
             <diV id="htmlFooterFromFunction">
                 <script type="text/javascript" src="/public/jquery/jquery.min.js"></script>
@@ -300,6 +316,12 @@ class Utils
                 <?php if (in_array(Utils::PKG_CHARTS, $INCLUDETHESE)) : ?>
                     <script type="text/javascript" src="/public/bootstrap/js/bootstrap.min.js"></script>
                 <?php endif; ?>
+
+                <?php if (in_array(Utils::PKG_FONTAWESOME, $INCLUDETHESE)) : ?>
+                <!-- Bootstrap -->
+                <link href="/public/font-awesome/css/bootstrap.min.css" rel="stylesheet">
+                <?php /* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"> */ ?>
+            <?php endif; ?>
             </diV>
         </body>
 
