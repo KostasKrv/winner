@@ -283,16 +283,16 @@ class Utils
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>Le winner<?php if (!empty($title)) : ?> | <?php echo $title ?><?php endif ?></title>
 
-            <?php if (in_array(Utils::PKG_BOOTSTRAP, $INCLUDETHESE)) : ?>
-                <!-- Bootstrap -->
-                <link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-                <?php /* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"> */ ?>
-            <?php endif; ?>
+            <link rel="apple-touch-icon" sizes="180x180" href="/public/favicon/apple-touch-icon.png">
+            <link rel="icon" type="image/png" sizes="32x32" href="/public/favicon/favicon-32x32.png">
+            <link rel="icon" type="image/png" sizes="16x16" href="/public/favicon/favicon-16x16.png">
+            <link rel="manifest" href="/public/favicon/site.webmanifest">
 
+            <?php if (in_array(Utils::PKG_BOOTSTRAP, $INCLUDETHESE)) : ?>
+                <link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+            <?php endif; ?>
             <?php if (in_array(Utils::PKG_FONTAWESOME, $INCLUDETHESE)) : ?>
-                <!-- Bootstrap -->
-                <link href="/public/font-awesome/css/bootstrap.min.css" rel="stylesheet">
-                <?php /* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"> */ ?>
+                <link href="/public/font-awesome/css/all.min.css" rel="stylesheet">
             <?php endif; ?>
         </head>
 
@@ -316,12 +316,6 @@ class Utils
                 <?php if (in_array(Utils::PKG_CHARTS, $INCLUDETHESE)) : ?>
                     <script type="text/javascript" src="/public/bootstrap/js/bootstrap.min.js"></script>
                 <?php endif; ?>
-
-                <?php if (in_array(Utils::PKG_FONTAWESOME, $INCLUDETHESE)) : ?>
-                <!-- Bootstrap -->
-                <link href="/public/font-awesome/css/bootstrap.min.css" rel="stylesheet">
-                <?php /* <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"> */ ?>
-            <?php endif; ?>
             </diV>
         </body>
 

@@ -18,11 +18,15 @@ require_once(__DIR__ . '/../lib/config.php');
         'title' => 'Fetch prices',
         'desciption' => 'Populate the current coin prices into the db.',
         'link' => 'page/price-fetcher',
+        'icon' => 'fa-solid fa-cloud-arrow-down',
+        'iconColor' => 'text-success-emphasis'
     ),
     array(
-        'title' => 'Show prices with statuses',
+        'title' => 'Show current status',
         'desciption' => 'Populate the current coin prices into the db.',
         'link' => 'page/prices-from-db',
+        'icon' => 'fa-solid fa-chart-line',
+        'iconColor' => 'text-primary'
     ),
 );
 ?>
@@ -33,7 +37,7 @@ require_once(__DIR__ . '/../lib/config.php');
         <div class="list-group">
             <?php foreach ($links as $linkArr) : ?>
                 <a href="<?php echo $linkArr['link'] ?>" target="_blank" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
-                    <img src="https://github.com/twbs.png" alt="twbs" width="32" height="32" class="rounded-circle flex-shrink-0">
+                    <i class="<?php echo $linkArr['icon'] ?> <?php echo $linkArr['iconColor'] ?> fa-2x"></i>
                     <div class="d-flex gap-2 w-100 justify-content-between">
                         <div>
                             <h6 class="mb-0"><?php echo $linkArr['title'] ?></h6>
