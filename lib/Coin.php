@@ -8,9 +8,9 @@ use Exception;
 
 class CoinService
 {
-    const DB_PRICE_TABLE = 'coin_prices';    
+    const DB_PRICE_TABLE = 'coin_prices';
     const FLOAT_PRECISION = 9;
-    
+
     static function shouldProcessSymbol($symbol, $bidPrice, $askPrice)
     {
         /// Zero prices check
@@ -31,8 +31,8 @@ class CoinService
         }
 
         return true;
-    }    
-    
+    }
+
     static function insertCoinPriceIntoDb($symbol, $bidPriceFloatVal, $askPriceFloatVal, $date)
     {
         $_DB = Config::getInstance()->db();
@@ -132,6 +132,8 @@ class CoinService
             '3 days' => '3 DAYS',
         );
 
+        $NOW = new DateTime();
+
         /// Fill intervals
         $_dateToFormat = 'YmdHi';
         foreach ($wantedIntervals as $i => $k) {
@@ -150,15 +152,15 @@ class CoinService
         foreach ($wantedIntervals as $intvlKey => $intvlArray) {
             $resultsRowArray = CoinService::findCoinPricesAtOnce($intvlArray['timestampMinuteInt']);
             foreach ((array) $resultsRowArray as $coinRow) {
-                $chartArray[$coinRow['coin_symbol']][$intvlKey] = $coinRow;
+                $chartArray[$coinRow['coin_symbol']][$intvlArray['timestampMinuteInt']] = array_merge(array('time' => $intvlKey), $coinRow);
             }
         }
 
         /// Fill in empty values
         foreach ($wantedIntervals as $intvlKey => $intvlArray) {
             foreach ($chartArray as $coinSymbol => $pricesArray) {
-                if (!array_key_exists($intvlKey, $pricesArray)) {
-                    $chartArray[$coinSymbol][$intvlKey] = null;
+                if (!array_key_exists($intvlArray['timestampMinuteInt'], $pricesArray)) {
+                    $chartArray[$coinSymbol][$intvlArray['timestampMinuteInt']] = null;
                 }
             }
         }
@@ -171,61 +173,72 @@ class CoinService
                 continue;
             }
 
-            $chartArray[$coinSymbol] = array_merge(array(0 => $coinRow), $chartArray[$coinSymbol]);
+            $chartArray[$coinSymbol][$NOW->format($_dateToFormat)] = array_merge(
+                array('time' => 'now'),
+                $coinRow
+            );
         }
 
         /// Fill current values with zeros if not found
         foreach ($chartArray as $coinSymbol => $pricesArray) {
-            if (!array_key_exists(0, $pricesArray)) {
-                $results[$coinSymbol] = array_merge(array(0 => null), $chartArray[$coinSymbol]);
+            if (!array_key_exists($NOW->format($_dateToFormat), $pricesArray)) {
+                $results[$coinSymbol] = array_merge(array($NOW->format($_dateToFormat) => null), $chartArray[$coinSymbol]);
             }
         }
+
+        /// Fill current values with zeros if not found
+        foreach ($chartArray as $coinSymbol => $pricesArray) {
+            krsort($pricesArray, SORT_DESC);
+            $chartArray[$coinSymbol] = $pricesArray;
+        }        
+
+        return $chartArray;
 
         /// At this point we should have the full chart with prices
 
-        /// Calculate the differences from now
+        /// Calculate the price differences/percentage from now
         if (false)
-        foreach ($chartArray as $coinSymbol => $pricesArray) {
-            /// This means we don't have the latest price
-            if (!array_key_exists(0, $pricesArray)) {
-                continue;
-            }
-
-            $priceNowRow = $pricesArray[0];
-            $bidPriceNow = $priceNowRow['bid_price'];
-            $askPriceNow = $priceNowRow['ask_price'];
-
-            /// Loop through the rest of the prices and do the calculations
-            foreach ($pricesArray as $priceTimeText => $priceRow) {
-                var_dump("priceTimeText -> $priceTimeText");
-                var_dump($priceRow);
-                if ($priceTimeText == 0 || empty($priceRow)) {
+            foreach ($chartArray as $coinSymbol => $pricesArray) {
+                /// This means we don't have the latest price
+                if (!array_key_exists(0, $pricesArray)) {
                     continue;
                 }
 
-                $bidPriceRow = $priceRow['bid_price'];
-                $askPriceRow = $priceRow['ask_price'];
+                $priceNowRow = $pricesArray[0];
+                $bidPriceNow = $priceNowRow['bid_price'];
+                $askPriceNow = $priceNowRow['ask_price'];
 
-                $prc = CoinService::FLOAT_PRECISION;
-                $bidDiff = bcsub($bidPriceNow, $bidPriceRow, $prc);
+                /// Loop through the rest of the prices and do the calculations
+                foreach ($pricesArray as $priceTimeText => $priceRow) {
+                    var_dump("priceTimeText -> $priceTimeText");
+                    var_dump($priceRow);
+                    if ($priceTimeText == 0 || empty($priceRow)) {
+                        continue;
+                    }
 
-                $bidPercentage = 0;
-                if ($bidPriceRow > 0) {                    
-                    $bidPercentage = bcmul(bcdiv($bidDiff, $bidPriceRow, $prc), 100, $prc);
+                    $bidPriceRow = $priceRow['bid_price'];
+                    $askPriceRow = $priceRow['ask_price'];
+
+                    $prc = CoinService::FLOAT_PRECISION;
+                    $bidDiff = bcsub($bidPriceNow, $bidPriceRow, $prc);
+
+                    $bidPercentage = 0;
+                    if ($bidPriceRow > 0) {
+                        $bidPercentage = bcmul(bcdiv($bidDiff, $bidPriceRow, $prc), 100, $prc);
+                    }
+
+                    $askDiff = bcsub($askPriceNow, $askPriceRow, $prc);
+                    $askPercentage = 0;
+                    if ($askPriceRow > 0) {
+                        $askPercentage = bcmul(bcdiv($askDiff, $askPriceRow, $prc), 100, $prc);
+                    }
+
+                    $chartArray[$coinSymbol][$priceTimeText]['bid_difference'] = Utils::toFloat($bidDiff);
+                    $chartArray[$coinSymbol][$priceTimeText]['bid_percentage'] = Utils::toFloat($bidPercentage);
+                    $chartArray[$coinSymbol][$priceTimeText]['ask_difference'] = Utils::toFloat($askDiff);
+                    $chartArray[$coinSymbol][$priceTimeText]['ask_percentage'] = Utils::toFloat($askPercentage);
                 }
-
-                $askDiff = bcsub($askPriceNow, $askPriceRow, $prc);
-                $askPercentage = 0;
-                if ($askPriceRow > 0) {
-                    $askPercentage = bcmul(bcdiv($askDiff, $askPriceRow, $prc), 100, $prc);
-                }
-
-                $chartArray[$coinSymbol][$priceTimeText]['bid_difference'] = Utils::toFloat($bidDiff);
-                $chartArray[$coinSymbol][$priceTimeText]['bid_percentage'] = Utils::toFloat($bidPercentage);
-                $chartArray[$coinSymbol][$priceTimeText]['ask_difference'] = Utils::toFloat($askDiff);
-                $chartArray[$coinSymbol][$priceTimeText]['ask_percentage'] = Utils::toFloat($askPercentage);
             }
-        }
 
         return $chartArray;
     }
