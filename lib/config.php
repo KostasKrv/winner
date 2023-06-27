@@ -18,7 +18,7 @@ class Config
 
         $this->initDB();
         $this->initBinanceApi();
-        $this->enableCatchFatalErrorsHandler();
+        //$this->enableCatchFatalErrorsHandler();
     }
 
     /// As seen in https://spencermortensen.com/articles/php-error-handling/
