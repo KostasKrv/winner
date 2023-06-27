@@ -4,7 +4,8 @@ namespace WinnerApp;
 
 require_once(__DIR__ . '/../vendor/autoload.php');
 
-require_once(__DIR__ . '/utils.php');
+require_once(__DIR__ . '/Utils.php');
+require_once(__DIR__ . '/Coin.php');
 require_once(__DIR__ . '/JsonResponse.php');
 
 global $GLOBAL_CONFIG;

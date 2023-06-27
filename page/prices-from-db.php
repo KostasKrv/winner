@@ -4,7 +4,7 @@ namespace WinnerApp;
 
 require_once(__DIR__ . '/../lib/config.php');
 
-$results = Utils::findCoinPricesChart();
+$results = CoinService::findCoinPricesChart();
 ?>
 
 <?php Utils::htmlHeader($title = "Price fetch"); ?>

@@ -4,7 +4,7 @@ namespace WinnerApp;
 
 require_once(__DIR__ . '/../lib/config.php');
 
-$results = Utils::fetchAndInsertPricesIntoDb();
+$results = CoinService::fetchAndInsertPricesIntoDb();
 ?>
 
 <?php Utils::htmlHeader($title = "Price fetch"); ?>
