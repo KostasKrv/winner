@@ -18,6 +18,11 @@ class Utils
         return substr_compare($haystack, $needle, -strlen($needle)) === 0;
     }
 
+    static function toFloat($num, $precision = 7)
+    {
+        return round((float)filter_var($num, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION), $precision);
+    }
+
     static function deleteLockFileIfOldEnough()
     {
         $CONFIG = Config::getInstance();
@@ -187,11 +192,6 @@ class Utils
 
     static function findCoinPricesChart()
     {
-        $coins = array(
-            '1INCHUSDT',
-            'ACAUSDT',
-        );
-
         $wantedIntervals = array(
             '1 minute' => '1 MINUTE',
             '2 minutes' => '2 MINUTES',
@@ -224,26 +224,120 @@ class Utils
             );
         }
 
-        $results = array();
-        
+        $chartArray = array();
+
         /// Fetch the prices from the db. There may be empty for some coins
         foreach ($wantedIntervals as $intvlKey => $intvlArray) {
             $resultsRowArray = Utils::findCoinPricesAtOnce($intvlArray['timestampMinuteInt']);
-            foreach ($resultsRowArray as $coinRow) {
-                $results[$coinRow['coin_symbol']][$intvlKey] = $coinRow;
+            foreach ((array) $resultsRowArray as $coinRow) {
+                $chartArray[$coinRow['coin_symbol']][$intvlKey] = $coinRow;
             }
         }
 
         /// Fill in empty values
-        foreach($wantedIntervals as $intvlKey => $intvlArray) {
-            foreach ($results as $coinSymbol => $pricesArray){
+        foreach ($wantedIntervals as $intvlKey => $intvlArray) {
+            foreach ($chartArray as $coinSymbol => $pricesArray) {
                 if (!array_key_exists($intvlKey, $pricesArray)) {
-                    $results[$coinSymbol][$intvlKey] = null;
+                    $chartArray[$coinSymbol][$intvlKey] = null;
                 }
             }
         }
 
-        return $results;
+        /// Now fetch the current prices
+        $currentPricesArray = Utils::findLatestCoinPricesAtOnce();
+        foreach ((array) $currentPricesArray as $coinRow) {
+            $coinSymbol = $coinRow['coin_symbol'];
+            if (array_key_exists(0, $chartArray[$coinSymbol])) {
+                continue;
+            }
+
+            $chartArray[$coinSymbol] = array_merge(array(0 => $coinRow), $chartArray[$coinSymbol]);
+        }
+
+        /// Fill current values with zeros if not found
+        foreach ($chartArray as $coinSymbol => $pricesArray) {
+            if (!array_key_exists(0, $pricesArray)) {
+                $results[$coinSymbol] = array_merge(array(0 => null), $chartArray[$coinSymbol]);
+            }
+        }
+
+        /// At this point we should have the full chart with prices
+
+        /// Calculate the differences from now
+        foreach ($chartArray as $coinSymbol => $pricesArray) {
+            /// This means we don't have the latest price
+            if (!array_key_exists(0, $pricesArray)) {
+                continue;
+            }
+
+            $priceNowRow = $pricesArray[0];
+            $bidPriceNow = $priceNowRow['bid_price'];
+            $askPriceNow = $priceNowRow['ask_price'];
+
+            /// Loop through the rest of the prices and do the calculations
+            foreach ($pricesArray as $priceTimeText => $priceRow) {
+                if ($priceTimeText == 0 || empty($priceRow)) {
+                    continue;
+                }
+
+                $bidPriceRow = $priceRow['bid_price'];
+                $askPriceRow = $priceRow['ask_price'];
+
+                $prc = 7;
+                $bidDiff = bcsub($bidPriceNow, $bidPriceRow, $prc);
+                $bidPercentage = bcmul(bcdiv($bidDiff, $bidPriceRow, $prc), 100, $prc);
+
+                $askDiff = bcsub($askPriceNow, $askPriceRow, $prc);
+                $askPercentage = bcmul(bcdiv($askDiff, $askPriceRow, $prc), 100, $prc);
+
+                //$priceRow['bid_difference'] = $bidDiff;
+                //var_dump($bidPriceRow, $askPriceRow);
+                //continue;
+                $chartArray[$coinSymbol][$priceTimeText]['bid_difference'] = Utils::toFloat($bidDiff);
+                $chartArray[$coinSymbol][$priceTimeText]['bid_percentage'] = Utils::toFloat($bidPercentage);
+                $chartArray[$coinSymbol][$priceTimeText]['ask_difference'] = Utils::toFloat($askDiff);
+                $chartArray[$coinSymbol][$priceTimeText]['ask_percentage'] = Utils::toFloat($askPercentage);
+            }
+        }
+
+        return $chartArray;
+    }
+
+    static function findLatestCoinPricesAtOnce()
+    {
+        $GLOBAL_CONFIG = Config::getInstance();
+        $_DB = $GLOBAL_CONFIG->db();
+
+        $thresholdInMinutesInt = 1;
+        $wantedDateTime = new DateTime();
+
+        if ($wantedDateTime instanceof DateTime) {
+            $_wantedDateTimeMinuteInt = intval($wantedDateTime->format('YmdHi'));
+        } else {
+            $_wantedDateTimeMinuteInt = $wantedDateTime;
+        }
+
+        $_oldestPriceMinuteInt = $_wantedDateTimeMinuteInt - $thresholdInMinutesInt;
+
+        $selectQuery = ""
+            . " SELECT DISTINCT(coin_symbol), bid_price, ask_price, price_date, price_date_minute"
+            . " FROM " . Utils::DB_PRICE_TABLE . " cp"
+            . " WHERE"
+            . " cp.price_date_minute >= $_oldestPriceMinuteInt"
+            . " ORDER BY ABS(CURRENT_DATE - cp.price_date) DESC, coin_symbol, cp.price_date ASC";
+
+        //echo $selectQuery;
+
+        $result = $_DB->select(
+            $selectQuery,
+            array()
+        );
+
+        if (empty($result)) {
+            return null;
+        }
+
+        return $result;
     }
 
     static function findCoinPricesAtOnce($wantedDateTime, $thresholdInMinutesInt = 1)
@@ -265,17 +359,19 @@ class Utils
             . " SELECT DISTINCT(coin_symbol), bid_price, ask_price, price_date, price_date_minute"
             . " FROM " . Utils::DB_PRICE_TABLE . " cp"
             . " WHERE"
-            . " cp.price_date_minute > ?"
+            . " cp.price_date_minute > $_oldestPriceMinuteInt"
             . " AND"
-            . " cp.price_date_minute < ?"
-            . " ORDER BY ABS(? - cp.price_date_minute), coin_symbol, cp.price_date ASC";
-            
+            . " cp.price_date_minute < $_newestPriceMinuteInt"
+            . " ORDER BY ABS($_wantedDateTimeMinuteInt - cp.price_date_minute), coin_symbol, cp.price_date ASC";
+
+        //echo $selectQuery;
+
         $result = $_DB->select(
             $selectQuery,
             array(
-                $_oldestPriceMinuteInt,
-                $_newestPriceMinuteInt,
-                $_wantedDateTimeMinuteInt,
+                //$_oldestPriceMinuteInt,
+                //$_newestPriceMinuteInt,
+                //$_wantedDateTimeMinuteInt,
             )
         );
 

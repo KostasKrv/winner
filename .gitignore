@@ -5,3 +5,7 @@ actions/ca.pem
 /public/bootstrap/css
 /public/bootstrap/js
 /composer.lock
+/public/jquery
+/public/bootstrap
+/public/font-awesome
+/page/ca.pem
