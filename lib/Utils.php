@@ -88,7 +88,7 @@ class Utils
             <link rel="manifest" href="/public/favicon/site.webmanifest">
             
             <?php if (in_array(Utils::PKG_BOOTSTRAP, $INCLUDETHESE)) : ?>
-                <link href="/vendor/twbs/dist/css/bootstrap.min.css" rel="stylesheet">
+                <link href="/vendor/twbs/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
             <?php endif; ?>
             <?php if (in_array(Utils::PKG_FONTAWESOME, $INCLUDETHESE)) : ?>
                 <link href="/vendor/components/font-awesome/css/all.min.css" rel="stylesheet">

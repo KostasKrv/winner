@@ -27,6 +27,13 @@ $links = array(
         'iconColor' => 'text-success-emphasis'
     ),
     array(
+        'title' => 'Insert segments Batch',
+        'desciption' => 'Populate the segments per hour into the db with a batch process.',
+        'link' => 'page/insert-segments-batch',
+        'icon' => 'fa-solid fa-chart-simple',
+        'iconColor' => 'text-success'
+    ),
+    array(
         'title' => 'Show current status',
         'desciption' => 'Populate the current coin prices into the db.',
         'link' => 'page/prices-from-db',

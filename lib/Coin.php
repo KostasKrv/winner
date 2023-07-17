@@ -96,6 +96,8 @@ class CoinService
                 } else {
                     $errorSets[$symbol] = $inserted;
                 }
+
+                CoinService::deleteDump();
             }
         } catch (Exception $e) {
             $mainException = $e->getMessage();
@@ -371,10 +373,19 @@ class CoinService
 
     static function deleteDump()
     {
-        /*$_DB->exec(
-            "DELETE FROM coin_prices WHERE price_date < ?",
-            array($before->format($_dateToFormat))
-        );*/
+        $GLOBAL_CONFIG = Config::getInstance();
+        $_DB = $GLOBAL_CONFIG->db();
+
+        $now = new DateTime();
+        $now->sub(DateInterval::createFromDateString('6 HOURS'));
+        $now->setTimezone(new DateTimeZone('Europe/Athens'));
+
+        $_DB->exec(
+            "DELETE FROM coin_prices WHERE price_date_minute < ?",
+            [
+                $now->format('YmdHi')
+            ]
+        );
     }
 
     static function fetchSymbolsToProcess()
@@ -408,6 +419,16 @@ class SegmentInserter extends JsonResponse
         $this->processSymbol($symbolFromPost);
         $this->toJsonResponse();
         //$this->processSymbol('MATICUSDT');
+    }
+
+    function batchInsert()
+    {        
+        $symbols = CoinService::fetchSymbolsToProcess();
+        foreach($symbols as $symbol){
+            $this->processSymbol($symbol);
+        }
+        
+        $this->toJsonResponse();
     }
 
     function processSymbol($symbol)
