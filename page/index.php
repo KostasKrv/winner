@@ -20,12 +20,19 @@ $links = array(
         'iconColor' => 'text-success-emphasis'
     ),
     array(
+        'title' => 'Insert segments',
+        'desciption' => 'Populate the segments per hour into the db.',
+        'link' => 'page/insert-segments',
+        'icon' => 'fa-solid fa-chart-simple',
+        'iconColor' => 'text-success-emphasis'
+    ),
+    array(
         'title' => 'Show current status',
         'desciption' => 'Populate the current coin prices into the db.',
         'link' => 'page/prices-from-db',
         'icon' => 'fa-solid fa-chart-line',
         'iconColor' => 'text-primary'
-    ),
+    ),    
 );
 ?>
 <div class="page-price-fetcher">

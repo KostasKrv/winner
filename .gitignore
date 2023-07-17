@@ -4,3 +4,4 @@ actions/ca.pem
 /public/bootstrap/css
 /public/bootstrap/js
 /composer.lock
+page/ca.pem

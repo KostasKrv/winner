@@ -86,13 +86,15 @@ class Utils
             <link rel="icon" type="image/png" sizes="32x32" href="/public/favicon/favicon-32x32.png">
             <link rel="icon" type="image/png" sizes="16x16" href="/public/favicon/favicon-16x16.png">
             <link rel="manifest" href="/public/favicon/site.webmanifest">
-
+            
             <?php if (in_array(Utils::PKG_BOOTSTRAP, $INCLUDETHESE)) : ?>
-                <link href="/public/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+                <link href="/vendor/twbs/dist/css/bootstrap.min.css" rel="stylesheet">
             <?php endif; ?>
             <?php if (in_array(Utils::PKG_FONTAWESOME, $INCLUDETHESE)) : ?>
-                <link href="/public/font-awesome/css/all.min.css" rel="stylesheet">
+                <link href="/vendor/components/font-awesome/css/all.min.css" rel="stylesheet">
             <?php endif; ?>
+
+            <script type="text/javascript" src="/vendor/components/jquery/jquery.min.js"></script>
         </head>
 
         <body class="bg-body-tertiary">
@@ -106,14 +108,12 @@ class Utils
         ?>
             <!-- From htmlFooterUtil -->
             <diV id="htmlFooterFromFunction">
-                <script type="text/javascript" src="/public/jquery/jquery.min.js"></script>
-
                 <?php if (in_array(Utils::PKG_BOOTSTRAP, $INCLUDETHESE)) : ?>
-                    <script type="text/javascript" src="/public/bootstrap/js/bootstrap.min.js"></script>
+                    <script type="text/javascript" src="/vendor/twbs/dist/js/bootstrap.min.js"></script>
                 <?php endif; ?>
 
                 <?php if (in_array(Utils::PKG_CHARTS, $INCLUDETHESE)) : ?>
-                    <script type="text/javascript" src="/public/bootstrap/js/bootstrap.min.js"></script>
+                    <script type="text/javascript" src="/vendor/twbs/dist/js/bootstrap.min.js"></script>
                 <?php endif; ?>
             </diV>
         </body>

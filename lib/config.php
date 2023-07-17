@@ -5,8 +5,9 @@ namespace WinnerApp;
 require_once(__DIR__ . '/../vendor/autoload.php');
 
 require_once(__DIR__ . '/Utils.php');
-require_once(__DIR__ . '/Coin.php');
 require_once(__DIR__ . '/JsonResponse.php');
+require_once(__DIR__ . '/Coin.php');
+
 
 global $GLOBAL_CONFIG;
 class Config
@@ -16,9 +17,8 @@ class Config
         set_time_limit(60 * 50);
         date_default_timezone_set('Europe/Athens');
 
-        $this->initDB();
-        $this->initBinanceApi();
-        //$this->enableCatchFatalErrorsHandler();
+        $this->initDB();        
+        $this->enableCatchFatalErrorsHandler();
     }
 
     /// As seen in https://spencermortensen.com/articles/php-error-handling/
@@ -55,15 +55,22 @@ class Config
 
         /// Step 3
         $onException = function ($exception) {
-            Config::logError("Exception: " . $exception->getMessage() . "\n");
+            Config::logError($exception);            
         };
 
         set_exception_handler($onException);
     }
 
-    public static function logError($exceptionString)
+    public static function logError($exception)
     {
-        echo $exceptionString;
+        $jsonResp = new JsonResponse();
+        if ($jsonResp->isAjax()) {
+            $jsonResp->errorsArray['APP_EXCEPTION'] = "Exception: " . $exception;
+            $jsonResp->toJsonResponse();
+            return;
+        }
+        
+        echo '<p class="app_exception">' . "Exception: " . $exception . '</p>';
     }
 
     private $DB;
@@ -74,7 +81,11 @@ class Config
 
     private $BINANCE_API;
     public function binanceApi()
-    {
+    {   
+        if ($this->BINANCE_API === null) {
+            $this->initBinanceApi();
+        }
+
         return $this->BINANCE_API;
     }
 

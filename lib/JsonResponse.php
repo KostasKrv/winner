@@ -32,8 +32,6 @@ class JsonResponse
     function toJsonResponse()
     {
         header("Content-Type: text/json; charset=utf-8");
-        //ini_set('display_errors',1);
-        //error_reporting(E_ALL);
 
         /// Change the response code maybe
         $resp_code = 200;
@@ -68,7 +66,7 @@ class JsonResponse
         exit;
     }
 
-    /*public function isAjax() {
+    public function isAjax() {
         if ((!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest')) {            
             return true;
         }
@@ -87,5 +85,5 @@ class JsonResponse
         }
 
         return $this;
-    }*/
+    }
 }

@@ -4,7 +4,10 @@ namespace WinnerApp;
 
 use DateInterval;
 use DateTime;
+use DateTimeZone;
 use Exception;
+
+require_once(__DIR__ . '/config.php');
 
 class CoinService
 {
@@ -203,7 +206,7 @@ class CoinService
         foreach ($chartArray as $coinSymbol => $pricesArray) {
 
             /// This means we don't have the latest price
-            if (!array_key_exists($NOW_KEY, $pricesArray)) {                
+            if (!array_key_exists($NOW_KEY, $pricesArray)) {
                 continue;
             }
 
@@ -223,12 +226,12 @@ class CoinService
                 $bidPriceRow = $priceRow['bid_price'];
                 $askPriceRow = $priceRow['ask_price'];
 
-                
+
                 $bidDiff = bcsub($bidPriceNow, $bidPriceRow, $PRECISION);
 
                 $bidPercentage = 0;
                 if ($bidPriceRow > 0) {
-                    $bidPercentage = bcmul(bcdiv($bidDiff, $bidPriceRow, $PRECISION), 100, 2);                    
+                    $bidPercentage = bcmul(bcdiv($bidDiff, $bidPriceRow, $PRECISION), 100, 2);
                 }
                 $askDiff = Utils::toFloat(bcsub($askPriceNow, $askPriceRow, $PRECISION));
                 $askPercentage = 0;
@@ -372,5 +375,114 @@ class CoinService
             "DELETE FROM coin_prices WHERE price_date < ?",
             array($before->format($_dateToFormat))
         );*/
+    }
+
+    static function fetchSymbolsToProcess()
+    {
+        $GLOBAL_CONFIG = Config::getInstance();
+        $_DB = $GLOBAL_CONFIG->db();
+
+        $symbolDbRows = $_DB->select('SELECT DISTINCT(cp.coin_symbol) FROM coin_prices cp');
+
+        $symbols = array();
+        foreach ($symbolDbRows as $symbolRow) {
+            $symbols[] = $symbolRow['coin_symbol'];
+        }
+
+        return $symbols;
+    }
+}
+
+class SegmentInserter extends JsonResponse
+{
+    const PARAM_COIN_SYMBOL = 'coin_symbol';
+
+    function __construct()
+    {
+    }
+
+    function action()
+    {
+        $symbolFromPost = filter_input(INPUT_POST, SegmentInserter::PARAM_COIN_SYMBOL);
+
+        $this->processSymbol($symbolFromPost);
+        $this->toJsonResponse();
+        //$this->processSymbol('MATICUSDT');
+    }
+
+    function processSymbol($symbol)
+    {
+        $CONFIG = Config::getInstance();
+
+        $_DB = $CONFIG->db();
+
+        $dbTableName = 'coin_price_segments';
+        $dateToFormat = 'Y-m-d H:i:s.v';
+        $dateFromFormat = 'U.u';
+        $_timezone = new DateTimeZone('Europe/Athens');
+
+        //Periods: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+        $segmentType = "1h";        
+        
+        $ticks = $CONFIG->binanceApi()->candlesticks(
+            $symbol,
+            $segmentType,
+            $limit = 24 * 2,
+            //$startTime * = $endTime,
+            //$endTime,
+        );
+
+        //var_dump($ticks);exit;
+        foreach ($ticks as $tickTime => $tick) :
+            /*
+                [1635516000000]=> array(13) { 
+                    ["open"]=> string(10) "0.00827100"
+                    ["high"]=>string(10) "0.00832900"
+                    ["low"]=>string(10) "0.00827100"
+                    ["close"]=>string(10) "0.00829300"
+                    ["volume"]=>string(11) "35.99663131"
+                    ["openTime"]=>int(1635516000000)
+                    ["closeTime"]=>int(1635516899999)
+                    ["assetVolume"]=>string(13) "4334.45700000"
+                    ["baseVolume"]=>string(11) "35.99663131"
+                    ["trades"]=>int(3315)
+                    ["assetBuyVolume"]=>string(13) "2557.97300000"
+                    ["takerBuyVolume"]=>string(11) "21.24492037"
+                    ["ignored"]=>string(1) "0"
+                }
+            */
+
+            try {
+                $_od = ($tick['openTime'] / 1000);
+                $_oT = DateTime::createFromFormat($dateFromFormat, number_format($_od, 6, '.', ''));
+                $_oT->setTimezone($_timezone);
+
+                $_cd = ($tick['closeTime'] / 1000);
+                $_cT = DateTime::createFromFormat($dateFromFormat, number_format($_cd, 6, '.', ''));
+                $_cT->setTimezone($_timezone);
+
+                $_set = [
+                    'coin_symbol' => $symbol,
+                    'low' => floatval($tick['low']),
+                    'high' => floatval($tick['high']),
+                    'open' => floatval($tick['open']),
+                    'close' => floatval($tick['close']),
+                    'open_time' => $ot = $_oT->format($dateToFormat),
+                    'close_time' => $ct = $_cT->format($dateToFormat),
+                    'segment_type' => $segmentType
+                ];
+
+                $_DB->insert($dbTableName, $_set);
+                $this->dataArray[$symbol]["$ot-$ct"] = $_set;
+            } catch (Exception $e) {
+                $a = 'one_per_segment';
+
+                if (strpos($e->getMessage(), $a) !== false) {                    
+                    $this->dataArray[] = 'Skipped: ' . $e->getMessage();
+                } else {
+                    $this->errorsArray[] = $e->getMessage() . '. Stack: ' . var_export(json_encode($e, JSON_PRETTY_PRINT), true);
+                }
+            }
+        endforeach;
     }
 }
